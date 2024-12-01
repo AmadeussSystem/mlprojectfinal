@@ -9,6 +9,6 @@
     }
   ],
   "env": {
-    "NODE_VERSION": "16"
+    "NODE_VERSION": "23.1"
   }
 }
