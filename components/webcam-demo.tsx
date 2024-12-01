@@ -69,20 +69,22 @@ export function WebcamDemo() {
       const updateEmotion = async () => {
         if (!isStreaming) return;
 
-        // Perform face detection and emotion recognition every 300ms (or adjust as needed)
         const detections = await faceapi
           .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
           .withFaceExpressions();
 
         if (detections.length > 0) {
-          const emotions = detections[0].expressions;
+          const emotions = detections[0].expressions as faceapi.FaceExpressions;
           const dominantEmotion = Object.keys(emotions).reduce((a, b) =>
-            emotions[a] > emotions[b] ? a : b
-          );
+            emotions[a as keyof faceapi.FaceExpressions] >
+            emotions[b as keyof faceapi.FaceExpressions]
+              ? a
+              : b
+          ) as keyof faceapi.FaceExpressions;
+
           setEmotion(dominantEmotion);
         }
 
-        // Resize and draw detections and emotions only if necessary
         const resizedDetections = faceapi.resizeResults(
           detections,
           displaySize
@@ -92,7 +94,6 @@ export function WebcamDemo() {
         faceapi.draw.drawDetections(canvas, resizedDetections);
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
 
-        // Use requestAnimationFrame to optimize the next frame
         requestAnimationFrame(updateEmotion);
       };
 
