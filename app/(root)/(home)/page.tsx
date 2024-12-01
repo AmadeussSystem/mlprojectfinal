@@ -1,7 +1,15 @@
+import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
+import { ImageUp } from "@/components/image-uploader";
+import { Webcam } from "@/components/webcam-demo";
+
 const Home = () => {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center">
-      Home
+    <div>
+      <Header />
+      <ImageUp />
+      <Webcam />
+      <Footer />
     </div>
   );
 };

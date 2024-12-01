@@ -1,5 +1,5 @@
-const page = () => {
-  return <div>Ask Question</div>;
-};
+// const page = () => {
+//   return <div>Ask Question</div>;
+// };
 
-export default page;
+// export default page;

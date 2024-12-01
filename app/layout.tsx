@@ -1,10 +1,4 @@
-import {
-  ClerkProvider,
-  SignInButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import React from "react";
@@ -38,16 +32,18 @@ export default function RootLayout({
           formButtonPrimary: "primary-gradient",
           footerActionLink: "primary-text-gradient hover:text-primary-500",
         },
+        layout: {
+          header: false,
+          footer: false,
+        },
       }}
     >
       <html lang="en">
         <body className={`${inter.variable} ${spaceGrotesk.variable}`}>
-          <SignedOut>
+          {/* <SignedOut>
             <SignInButton />
           </SignedOut>
-          <SignedIn>
-            <UserButton showName />
-          </SignedIn>
+          <SignedIn></SignedIn> */}
           {children}
         </body>
       </html>
