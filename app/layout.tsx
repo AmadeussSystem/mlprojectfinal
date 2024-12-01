@@ -32,10 +32,6 @@ export default function RootLayout({
           formButtonPrimary: "primary-gradient",
           footerActionLink: "primary-text-gradient hover:text-primary-500",
         },
-        layout: {
-          header: false,
-          footer: false,
-        },
       }}
     >
       <html lang="en">
