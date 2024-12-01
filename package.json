@@ -17,6 +17,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-tailwindcss": "^3.17.5",
+    "face-api.js": "^0.22.2",
     "lucide-react": "^0.462.0",
     "next": "15.0.3",
     "prettier": "^3.4.1",

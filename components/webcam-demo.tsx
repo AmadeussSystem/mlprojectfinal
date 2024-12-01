@@ -1,73 +1,130 @@
-'use client'
+"use client";
 
-import { useState, useRef, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Camera, CameraOff } from 'lucide-react'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import * as faceapi from "face-api.js";
+import { Camera, CameraOff } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 export function WebcamDemo() {
-  const [isStreaming, setIsStreaming] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [emotion, setEmotion] = useState<string | null>(null)
+  const [isStreaming, setIsStreaming] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [emotion, setEmotion] = useState<string | null>(null);
+  const [isModelLoaded, setIsModelLoaded] = useState(false);
 
   useEffect(() => {
-    if (isStreaming) {
-      startWebcam()
+    const loadModels = async () => {
+      const MODEL_URL = "/models";
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+      setIsModelLoaded(true);
+      console.log("Models loaded");
+    };
+
+    loadModels();
+  }, []);
+
+  useEffect(() => {
+    if (isStreaming && isModelLoaded) {
+      startWebcam();
     } else {
-      stopWebcam()
+      stopWebcam();
     }
-  }, [isStreaming])
+  }, [isStreaming, isModelLoaded]);
 
   const startWebcam = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       if (videoRef.current) {
-        videoRef.current.srcObject = stream
+        videoRef.current.srcObject = stream;
       }
+      analyzeEmotions();
     } catch (err) {
-      console.error("Error accessing the webcam", err)
+      console.error("Error accessing the webcam", err);
     }
-  }
+  };
 
   const stopWebcam = () => {
     if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
-      tracks.forEach(track => track.stop())
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach((track) => track.stop());
     }
-    setEmotion(null)
-  }
+    setEmotion(null);
+  };
+
+  const analyzeEmotions = async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas) return;
+
+    video.onloadedmetadata = () => {
+      const displaySize = {
+        width: video.videoWidth,
+        height: video.videoHeight,
+      };
+      faceapi.matchDimensions(canvas, displaySize);
+
+      const updateEmotion = async () => {
+        if (!isStreaming) return;
+
+        // Perform face detection and emotion recognition every 300ms (or adjust as needed)
+        const detections = await faceapi
+          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+          .withFaceExpressions();
+
+        if (detections.length > 0) {
+          const emotions = detections[0].expressions;
+          const dominantEmotion = Object.keys(emotions).reduce((a, b) =>
+            emotions[a] > emotions[b] ? a : b
+          );
+          setEmotion(dominantEmotion);
+        }
+
+        // Resize and draw detections and emotions only if necessary
+        const resizedDetections = faceapi.resizeResults(
+          detections,
+          displaySize
+        );
+        const ctx = canvas.getContext("2d");
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+        faceapi.draw.drawDetections(canvas, resizedDetections);
+        faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+
+        // Use requestAnimationFrame to optimize the next frame
+        requestAnimationFrame(updateEmotion);
+      };
+
+      updateEmotion();
+    };
+  };
 
   const toggleWebcam = () => {
-    setIsStreaming(!isStreaming)
-  }
-
-  const detectEmotion = () => {
-    // This is where you would implement the actual emotion detection logic
-    // For this demo, we'll just set a random emotion
-    const emotions = ['Happy', 'Sad', 'Angry', 'Surprised', 'Neutral']
-    const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)]
-    setEmotion(randomEmotion)
-  }
+    setIsStreaming(!isStreaming);
+  };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="mx-auto w-full max-w-md">
       <CardContent className="p-6">
-        <div className="aspect-video bg-muted mb-4 rounded-lg overflow-hidden">
+        <div className="relative mb-4 aspect-video overflow-hidden rounded-lg bg-muted">
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover"
+            className="absolute left-0 top-0 size-full object-cover"
           />
+          <canvas ref={canvasRef} className="absolute left-0 top-0 size-full" />
         </div>
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <Button onClick={toggleWebcam}>
-            {isStreaming ? <CameraOff className="mr-2 h-4 w-4" /> : <Camera className="mr-2 h-4 w-4" />}
-            {isStreaming ? 'Stop Camera' : 'Start Camera'}
-          </Button>
-          <Button onClick={detectEmotion} disabled={!isStreaming}>
-            Detect Emotion
+            {isStreaming ? (
+              <CameraOff className="mr-2 size-4" />
+            ) : (
+              <Camera className="mr-2 size-4" />
+            )}
+            {isStreaming ? "Stop Camera" : "Start Camera"}
           </Button>
         </div>
         {emotion && (
@@ -77,6 +134,5 @@ export function WebcamDemo() {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
-
